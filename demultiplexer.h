@@ -21,6 +21,13 @@ public:
   }
   void demux(Register &result, Register &num, uint16_t strbSign);
   //  Register getDemuxResult() { return resultNumber; }
+
+  void printLogData(string demuxAlias) {
+    Log(INFO) << "Demultiplexer " << demuxAlias << " initialization...";
+
+    Log(INFO) << "Demultiplexer " << demuxAlias
+              << " was succefully initialized.";
+  }
 };
 
 #endif // DEMULTIPLEXER_H
