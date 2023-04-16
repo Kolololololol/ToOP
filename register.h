@@ -44,6 +44,7 @@ public:
       : size(sz), representation(repr){
                       //    Log(INFO) << "Register initialization...";
                   };
+  Register(uint16_t sz) : size(sz) {}
   Register(deque<bool> &num, uint16_t sz, uint16_t repr)
       : number(num), size(sz),
         representation(repr){
@@ -66,6 +67,7 @@ public:
               << "REPRESENTATION:" << setw(40)
               << representationNames[representation];
   };
+
   void printShortLogData(string regAlias) {
     Log(INFO) << "Register " << regAlias << " value: " << printRegister();
   };
@@ -95,9 +97,10 @@ public:
     }
   }
   void flip(size_t position) { number[position] = !number[position]; }
-  void add(bool bit) { number.push_back(bit); }
-  void addFront(bool bit) { number.push_front(bit); }
+  void add(bool bit = false) { number.push_back(bit); }
+  void addFront(bool bit = false) { number.push_front(bit); }
   void remove() { number.pop_back(); }
+  void removeFront() { number.pop_front(); }
   void reserve(int sz) {
     for (auto i = 0; i < sz; ++i) {
       number.push_back(false);
@@ -122,14 +125,24 @@ public:
 
   //    //    return reg<this;
   //  }
+
   deque<bool> getNumber() const { return number; };
 
   uint16_t getRepresentation() const { return representation; };
+
+  int16_t getSize() const { return size; };
   void setMSB() {
     MSB = number[0];
     //    cout << MSB;
   }
+
+  void setSign(bool sign) {
+    number[0] = sign;
+    //    cout << MSB;
+  }
   string convertBinaryToDecimalString();
+
+  bool getMSB() { return MSB; }
 };
 
 #endif // REGISTER_H
