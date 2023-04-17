@@ -152,26 +152,39 @@ Register ALU::mul2(Register &A, Register &B) {
   for (auto i = B.getSize() - 1; i > 0; --i) {
     if (B[i]) {
       regCLow = add(A, regCLow);
-      Log(INFO) << "The operation of adding the lower part of the register "
-                   "regA and regC was performed.";
-      regCLow.printShortLogData("regCLow");
+      //      Log(INFO) << "The operation of adding the lower part of the
+      //      register "
+      //                   "regA and regC was performed.";
+      //      regCLow.printShortLogData("regCLow");
       regCHigh = add(regAHigh, regCHigh);
-      Log(INFO) << "The operation of adding the upper part of the register "
-                   "regA and regC was performed.";
-      regCLow.printShortLogData("regCHigh");
+      //      Log(INFO) << "The operation of adding the upper part of the
+      //      register "
+      //                   "regA and regC was performed.";
+      //      regCLow.printShortLogData("regCHigh");
+
+      Log(INFO) << "RegC\t" << regCHigh.printRegister() << ' '
+                << regCLow.printRegister();
     }
     A = shl(A);
+    //    Log(INFO) << "A logical shift operation to the left was performed for
+    //    he "
+    //                 "lower part of the register regA (regALow).";
+
     Log(INFO) << "A logical shift operation to the left was performed for he "
-                 "lower part of the register regA (regALow).";
-    A.printShortLogData("regALow");
+                 "register regA.";
+    //    A.printShortLogData("regALow");
     bool bit = flags.CF;
     regAHigh = shl(regAHigh);
-    Log(INFO) << "A logical shift operation to the left was performed for he "
-                 "upper part of the register regA (regAHigh).";
-    regAHigh.printShortLogData("regAHigh");
+
+    //    Log(INFO) << "A logical shift operation to the left was performed for
+    //    he "
+    //                 "upper part of the register regA (regAHigh).";
+    //    regAHigh.printShortLogData("regAHigh");
     regAHigh[regSize - 1] = bit;
-    Log(INFO) << "The carry flag was saved to the least significant bit.";
-    regAHigh.printShortLogData("regAHigh");
+    //    Log(INFO) << "The carry flag was saved to the least significant bit.";
+    //    regAHigh.printShortLogData("regAHigh");
+    Log(INFO) << "RegA\t" << regAHigh.printRegister() << ' '
+              << A.printRegister();
   }
   noAdderLog = false;
 
