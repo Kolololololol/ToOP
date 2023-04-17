@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string>
 
-#define ERROR_RETURN                                                           \
+#define CMD_ERROR_RETURN                                                       \
   {                                                                            \
     Log(FATAL) << "Program finished with exit code 1";                         \
     return 1;                                                                  \
@@ -44,6 +44,9 @@ int addingSignMagnitude(/*string str1, string str2*/ int64_t num1,
                         int64_t num2);
 int addingOnesComlement(/*string str1, string str2*/ int64_t num1,
                         int64_t num2);
+int mulNums(int64_t num1, int64_t num2);
+void performAdditionAndSubstruction(QCommandLineParser &parser,
+                                    QCommandLineOption &option);
 
 loglevel_e loglevel = DEBUG;
 int main(int argc, char *argv[]) {
@@ -61,49 +64,97 @@ int main(int argc, char *argv[]) {
   //      QCoreApplication::translate("main", "Destination directory."));
 
   QCommandLineOption optAdderSize(
-      QStringList() << "a"
+      QStringList() << "d"
                     << "adder-size",
       QCoreApplication::translate("main", "Set the size of adder."),
       QCoreApplication::translate("main", "size"));
-  parser.addOption(optAdderSize);
+  //  parser.addOption(optAdderSize);
 
   //  parser.addHelpOption();
   const QCommandLineOption optHelp = parser.addHelpOption();
+  const QCommandLineOption optVersion = parser.addVersionOption();
 
-  QString ocNums = QCoreApplication::translate("main", "numbers");
+  QString addOcrNums = QCoreApplication::translate("main", "numbers");
   QCommandLineOption optAddingOnesComplementRepr(
-      QStringList() << "n"
-                    << "add-ones-compl",
-      QCoreApplication::translate(
-          "main", "One`s complement addition and substraction."),
-      ocNums);
-  parser.addOption(optAddingOnesComplementRepr);
+      "add-ones-compl",
+      QCoreApplication::translate("main", "One`s complement addition."),
+      addOcrNums);
+  //  parser.addOption(optAddingOnesComplementRepr);
 
-  QCommandLineOption optOperation(
-      QStringList() << "o"
-                    << "operation",
-      QCoreApplication::translate("main", "Set an operation on two numbers."),
-      QCoreApplication::translate("main", "oper"));
-  parser.addOption(optOperation);
+  //  QCommandLineOption optOperation(
+  //      QStringList() << "o"
+  //                    << "operation",
+  //      QCoreApplication::translate("main", "Set an operation on two
+  //      numbers."), QCoreApplication::translate("main", "oper"));
+  //  parser.addOption(optOperation);
 
   QCommandLineOption optRegisterSize(
       QStringList() << "r"
                     << "register-size",
       QCoreApplication::translate("main", "Set the size of register."),
       QCoreApplication::translate("main", "size"));
-  parser.addOption(optRegisterSize);
+  //  parser.addOption(optRegisterSize);
 
-  QString smNums = QCoreApplication::translate("main", "numbers");
-  QCommandLineOption optAddingSignMagnitudeRepr(
+  QString addTcrNums = QCoreApplication::translate("main", "numbers");
+  QCommandLineOption optAddingTwosComplRepr(
+      QStringList() << "a"
+                    << "add",
+      QCoreApplication::translate("main", "Two`s complement addition."),
+      addTcrNums);
+  //  parser.addOption(optAddingSignMagnitudeRepr);
+
+  QString subTcrNums = QCoreApplication::translate("main", "numbers");
+  QCommandLineOption optSubtractTwosComplRepr(
       QStringList() << "s"
-                    << "add-sign-magn",
+                    << "sub",
+      QCoreApplication::translate("main", "Two`s complement substraction."),
+      subTcrNums);
+
+  QString subOcrNums = QCoreApplication::translate("main", "numbers");
+  QCommandLineOption optSubtractOnesComplRepr(
+      "sub-ones-compl",
+      QCoreApplication::translate("main", "One`s complement substraction."),
+      subOcrNums);
+
+  QString mul2Nums = QCoreApplication::translate("main", "numbers");
+  QCommandLineOption optMulTwo(
+      QStringList() << "m"
+                    << "mul-type-2",
       QCoreApplication::translate("main",
-                                  "Sign magnitude addition and substraction."),
-      smNums);
-  parser.addOption(optAddingSignMagnitudeRepr);
+                                  "Multiplication with multiplicand left "
+                                  "shifting and partial product addition."),
+      mul2Nums);
+
+  QString div2Nums = QCoreApplication::translate("main", "numbers");
+  QCommandLineOption optDivTwo(
+      QStringList() << "i"
+                    << "div-type-2",
+      QCoreApplication::translate("main", "Two`s complement substraction."),
+      subTcrNums);
+
+  QString addBcdNums = QCoreApplication::translate("main", "numbers");
+  QCommandLineOption optAddBcd(
+      QStringList() << "t"
+                    << "add-bcd",
+      QCoreApplication::translate("main", "Addition of BCD numbers."),
+      addBcdNums);
+
+  QString subBcdNums = QCoreApplication::translate("main", "numbers");
+  QCommandLineOption optSubBcd(
+      QStringList() << "u"
+                    << "sub-bcd",
+      QCoreApplication::translate("main", "Substraction of BCD numbers"),
+      subBcdNums);
+
+  parser.addOptions(QList<QCommandLineOption>()
+                    << optAddingTwosComplRepr << optAddingOnesComplementRepr
+                    << optAdderSize << optHelp << optDivTwo << optMulTwo
+                    << optRegisterSize << optSubtractTwosComplRepr
+                    << optSubtractOnesComplRepr << optAddBcd << optSubBcd
+                    << optVersion);
 
   //  parser.addVersionOption();
-  const QCommandLineOption optVersion = parser.addVersionOption();
+  //  const QCommandLineOption optVersion = parser.addVersionOption();
 
   //  parser.process(a);
   //  const QStringList args = parser.positionalArguments();
@@ -111,7 +162,7 @@ int main(int argc, char *argv[]) {
     Log(ERROR) << parser.errorText().toStdString();
     Log(INFO) << "Try '" << argv[0]
               << " -h' to get help on command line parameters.";
-    ERROR_RETURN
+    CMD_ERROR_RETURN
   }
 
   //  parser.process(a);
@@ -131,7 +182,7 @@ int main(int argc, char *argv[]) {
     if (val.isNull() || val == "") {
       Log(ERROR) << "Register size is not set.";
 
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     }
     sizeReg = val.toUInt();
 
@@ -140,7 +191,7 @@ int main(int argc, char *argv[]) {
                  << ": argument should contain "
                     "a number as size of registers";
 
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     } else if (sizeReg > 0) {
       Log(INFO) << "Register size was succefully initialized with value "
                 << sizeReg;
@@ -154,7 +205,7 @@ int main(int argc, char *argv[]) {
     if (val.isNull() || val == "") {
       Log(ERROR) << "Adder size is not set.";
 
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     }
 
     sizeAdder = val.toUInt();
@@ -164,15 +215,21 @@ int main(int argc, char *argv[]) {
                  << ": argument should contain "
                     "a number as size of registers";
 
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     } else if (sizeAdder > 0) {
       Log(INFO) << "Register size was succefully initialized with value "
                 << sizeAdder;
     }
   }
 
-  if (parser.isSet(optAddingSignMagnitudeRepr)) {
-    QString tmp = parser.value(optAddingSignMagnitudeRepr);
+  if (parser.isSet(optAddingTwosComplRepr) ||
+      parser.isSet(optSubtractTwosComplRepr)) {
+    QString tmp;
+    if (parser.isSet(optAddingTwosComplRepr)) {
+      tmp = parser.value(optAddingTwosComplRepr);
+    } else if (parser.isSet(optSubtractTwosComplRepr)) {
+      tmp = parser.value(optSubtractTwosComplRepr);
+    } /*QString tmp = parser.value(optAddingTwosComplRepr);*/
     auto nums =
         tmp.split(QRegularExpression("[,\\s]+"), QString::SkipEmptyParts);
     //    QRegularExpression reA("/(?<=^|)-?\\d+(?=|$)/gx");
@@ -181,16 +238,16 @@ int main(int argc, char *argv[]) {
                  << ": argument should contain "
                     "2 numbers, separated by comma";
 
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     }
 
     //    if (!parser.isSet(optRegisterSize)) {
 
-    if (!parser.isSet(optOperation)) {
-      Log(ERROR) << "Operation type is not set.";
+    //    if (!parser.isSet(optOperation)) {
+    //      Log(ERROR) << "Operation type is not set.";
 
-      ERROR_RETURN
-    }
+    //      CMD_ERROR_RETURN
+    //    }
 
     str1 = nums.at(0).toStdString();
     //    str1 = getUserInputAsUInt32()
@@ -207,15 +264,21 @@ int main(int argc, char *argv[]) {
                      << " should be greater than " << num2
                      << " in absolute value.";
 
-          ERROR_RETURN
+          CMD_ERROR_RETURN
         }
       }
     }
-    int status = addingSignMagnitude(num1, num2);
+    int status;
+    if (parser.isSet(optAddingTwosComplRepr)) {
+      status = addingSignMagnitude(num1, num2);
+    } else if (parser.isSet(optSubtractTwosComplRepr)) {
+      status = addingSignMagnitude(num1, -num2);
+    }
+    //    int status = addingSignMagnitude(num1, num2);
     //      int tmp = ad
 
     if (status == 1) {
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     }
     OK_RETURN
 
@@ -228,27 +291,35 @@ int main(int argc, char *argv[]) {
     ERROR_RETURN
   }*/
 
-  if (parser.isSet(optAddingOnesComplementRepr)) {
-    QString tmp = parser.value(optAddingOnesComplementRepr);
+  if (parser.isSet(optAddingOnesComplementRepr) ||
+      parser.isSet(optSubtractOnesComplRepr)) {
+    QString tmp;
+    //    = parser.value(optAddingOnesComplementRepr);
+
+    if (parser.isSet(optAddingOnesComplementRepr)) {
+      tmp = parser.value(optAddingOnesComplementRepr);
+    } else if (parser.isSet(optSubtractOnesComplRepr)) {
+      tmp = parser.value(optSubtractOnesComplRepr);
+    }
     auto nums =
         tmp.split(QRegularExpression("[,\\s]+"), QString::SkipEmptyParts);
     //    QRegularExpression reA("/(?<=^|)-?\\d+(?=|$)/gx");
-    cout << tmp.toStdString();
+    //    cout << tmp.toStdString();
     if (nums.count() != 2) {
       Log(ERROR) << "Invalid number of params at " << tmp.toStdString()
                  << ": argument should contain "
                     "2 numbers, separated by comma";
 
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     }
 
     //    if (!parser.isSet(optRegisterSize)) {
 
-    if (!parser.isSet(optOperation)) {
-      Log(ERROR) << "Operation type is not set.";
+    //    if (!parser.isSet(optOperation)) {
+    //      Log(ERROR) << "Operation type is not set.";
 
-      ERROR_RETURN
-    }
+    //      CMD_ERROR_RETURN
+    //    }
 
     str1 = nums.at(0).toStdString();
     //    str1 = getUserInputAsUInt32()
@@ -265,51 +336,114 @@ int main(int argc, char *argv[]) {
                      << " should be greater than " << num2
                      << " in absolute value.";
 
-          ERROR_RETURN
+          CMD_ERROR_RETURN
         }
       }
     }
     //      cout << num1 << endl;
     //      cout << num2 << endl;
     //      int tmp = addingSignMagnitude(str1, str2);
-    int status = addingOnesComlement(num1, num2);
-    //      int tmp = ad
-
+    int status;
+    if (parser.isSet(optAddingOnesComplementRepr)) {
+      status = addingOnesComlement(num1, num2);
+    } else if (parser.isSet(optSubtractOnesComplRepr)) {
+      status = addingOnesComlement(num1, -num2);
+      //    int status = addingOnesComlement(num1, num2);
+      //      int tmp = ad
+    }
     if (status == 1) {
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     }
     OK_RETURN
   }
 
-  if (parser.isSet(optOperation)) {
-    operSign = static_cast<char>(parser.value(optOperation).at(0).toLatin1());
-    switch (operSign) {
-    case '+': {
+  if (parser.isSet(optMulTwo)) {
+    QString tmp = parser.value(optMulTwo);
 
-    } break;
-    case '-': {
+    auto nums =
+        tmp.split(QRegularExpression("[,\\s]+"), QString::SkipEmptyParts);
+    //    QRegularExpression reA("/(?<=^|)-?\\d+(?=|$)/gx");
+    //    cout << tmp.toStdString();
+    if (nums.count() != 2) {
+      Log(ERROR) << "Invalid number of params at " << tmp.toStdString()
+                 << ": argument should contain "
+                    "2 numbers, separated by comma";
 
-      num2 = -num2;
-
-    } break;
-    case '*': {
-    } break;
-    case '/': {
-    } break;
-    default: {
-      Log(ERROR) << "Invalid param at" << operSign
-                 << ": operation argument should contain only "
-                    "+ or -";
-
-      ERROR_RETURN
+      CMD_ERROR_RETURN
     }
+
+    //    if (!parser.isSet(optRegisterSize)) {
+
+    //    if (!parser.isSet(optOperation)) {
+    //      Log(ERROR) << "Operation type is not set.";
+
+    //      CMD_ERROR_RETURN
+    //    }
+
+    str1 = nums.at(0).toStdString();
+    //    str1 = getUserInputAsUInt32()
+    //    cout << str1 << "\n";
+    str2 = nums.at(1).toStdString();
+    cout << "aaa";
+    {
+      auto sz = (1 << (sizeReg - 1));
+      if (numberValidation(str1, -sz, (sz - 1), &num1) &&
+          numberValidation(str2, -sz, (sz - 1), &num2)) {
+        //          cout << num2;
+        //          cout << num1;
+        if (abs(num1) < abs(num2)) {
+          Log(ERROR) << "Invalid param at " << tmp.toStdString() << ": " << num1
+                     << " should be greater than " << num2
+                     << " in absolute value.";
+
+          CMD_ERROR_RETURN
+        }
+      }
     }
+    //      cout << num1 << endl;
+    //      cout << num2 << endl;
+    //      int tmp = addingSignMagnitude(str1, str2);
+    int status = mulNums(num1, num2);
+
+    //    int status = addingOnesComlement(num1, num2);
+    //      int tmp = ad
+
+    if (status == 1) {
+      CMD_ERROR_RETURN
+    }
+    OK_RETURN
   }
 
   //  if (parser.isSet(optOperation)) {
   //    operSign =
-  //    static_cast<char>(parser.value(optOperation).at(0).toLatin1()); switch
-  //    (operSign) { case '+': {
+  //    static_cast<char>(parser.value(optOperation).at(0).toLatin1());
+  //    switch (operSign) {
+  //    case '+': {
+
+  //    } break;
+  //    case '-': {
+
+  //      num2 = -num2;
+
+  //    } break;
+  //    case '*': {
+  //    } break;
+  //    case '/': {
+  //    } break;
+  //    default: {
+  //      Log(ERROR) << "Invalid param at" << operSign
+  //                 << ": operation argument should contain only "
+  //                    "+ or -";
+
+  //      CMD_ERROR_RETURN
+  //    }
+  //    }
+  //  }
+
+  //  if (parser.isSet(optOperation)) {
+  //    operSign =
+  //    static_cast<char>(parser.value(optOperation).at(0).toLatin1());
+  //    switch (operSign) { case '+': {
   //      //      cout << num1 << endl;
   //      //      cout << num2 << endl;
   //      //      int tmp = addingSignMagnitude(str1, str2);
@@ -336,7 +470,9 @@ int main(int argc, char *argv[]) {
 
   //      if (tmp == 1) {
   //        ERROR_RETURN
-  //      }
+  //      }void performAdditionAndSubstruction(QCommandLineParser &parser,
+  //      QCommandLineOption &option){
+
   //      OK_RETURN
   //    } break;
   //    case '*': {
@@ -371,49 +507,51 @@ int addingSignMagnitude(/*string str1, string str2*/ int64_t num1,
   //  int loopCnt = ;
   //  Multiplexer mul;
   //  Log(INFO) << "Multiplexer A info";
-  Multiplexer mulA(regA, sizeReg, sizeAdder);
-  mulA.printLogData(stringify(mulA));
-  //  Log(INFO) << "Multiplexer B info";
-  Multiplexer mulB(regB, sizeReg, sizeAdder);
-  mulB.printLogData(stringify(mulB));
+  //  Multiplexer mulA(regA, sizeReg, sizeAdder);
+  //  mulA.printLogData(stringify(mulA));
+  //  //  Log(INFO) << "Multiplexer B info";
+  //  Multiplexer mulB(regB, sizeReg, sizeAdder);
+  //  mulB.printLogData(stringify(mulB));
 
   //  regA<regB
   //  uint16_t repr =
   //      (regA < regB) ? regB.getRepresentation() : regA.getRepresentation();
 
-  Adder adder(sizeAdder);
+  //  Adder adder(sizeAdder);
+  ALU alu(sizeAdder);
   Demultiplexer demux(sizeReg, sizeAdder);
-  Register regC(sizeReg, regA.getRepresentation());
+  //  Register regC(sizeReg, regA.getRepresentation());
+  Register regC = alu.add(regA, regB);
+  //  {
+  //    bool flag = false;
+  //    size_t tmp = sizeReg / sizeAdder;
+  //    size_t strobeSignal = 0;
+  //    for (size_t i = 0; i < tmp; ++i) {
+  //      strobeSignal = tmp - i - 1;
 
-  {
-    bool flag = false;
-    size_t tmp = sizeReg / sizeAdder;
-    size_t strobeSignal = 0;
-    for (size_t i = 0; i < tmp; ++i) {
-      strobeSignal = tmp - i - 1;
+  //      Register tmpA = mulA.mux(strobeSignal);
+  //      tmpA.printShortLogData("regA" + to_string(i + 1));
 
-      Register tmpA = mulA.mux(strobeSignal);
-      tmpA.printShortLogData("regA" + to_string(i + 1));
+  //      Register tmpB = mulB.mux(strobeSignal);
+  //      tmpB.printShortLogData("regB" + to_string(i + 1));
 
-      Register tmpB = mulB.mux(strobeSignal);
-      tmpB.printShortLogData("regB" + to_string(i + 1));
-
-      //      Adder adder(tmpA, tmpB, sizeAdder);
-      Register sum = adder.summ(tmpA, tmpB, flag);
-      sum.printShortLogData("temSum" + to_string(i + 1));
-      demux.demux(regC, sum, strobeSignal);
-      flag = adder.getCarryFlag();
-    }
-  }
+  //      //      Adder adder(tmpA, tmpB, sizeAdder);
+  //      Register sum = adder.summ(tmpA, tmpB, flag);
+  //      sum.printShortLogData("temSum" + to_string(i + 1));
+  //      demux.demux(regC, sum, strobeSignal);
+  //      flag = adder.getCarryFlag();
+  //    }
+  //  }
   //  Log(INFO) << "Register C info";
   regC.setMSB();
-  //  cout << regC.getRepresentation();
-  //  regC.printLogData("regC");
+  //  //  cout << regC.getRepresentation();
+  regC.printLogData("regC");
   regC.setNumberRepresentation(-1);
-  regC.printLogData(string("regC"));
+  //  regC.printLogData(string("regC"));
   Log(INFO) << "Result of operation is: "
             << regC.convertBinaryToDecimalString();
   //  Register regC = demux.getDemuxResult();
+  return 0;
 }
 
 int addingOnesComlement(/*string str1, string str2*/ int64_t num1,
@@ -427,71 +565,97 @@ int addingOnesComlement(/*string str1, string str2*/ int64_t num1,
   regB.setNumberRepresentation(ONES_COMPLEMENT_REPR);
   regB.printLogData(stringify(regB));
 
-  Multiplexer mulA(regA, sizeReg, sizeAdder);
-  mulA.printLogData(stringify(mulA));
+  //  Multiplexer mulA(regA, sizeReg, sizeAdder);
+  //  mulA.printLogData(stringify(mulA));
 
-  Multiplexer mulB(regB, sizeReg, sizeAdder);
-  mulB.printLogData(stringify(mulB));
+  //  Multiplexer mulB(regB, sizeReg, sizeAdder);
+  //  mulB.printLogData(stringify(mulB));
 
-  Adder adder(sizeAdder);
+  //  Adder adder(sizeAdder);
+  ALU alu(sizeAdder);
   Demultiplexer demux(sizeReg, sizeAdder);
-  Register regC(sizeReg, regA.getRepresentation());
+  //  Register regC(sizeReg, regA.getRepresentation());
+  Register regC = alu.add(regA, regB);
 
-  {
-    bool cFlag = false, oFlag = false;
-    size_t tmp = sizeReg / sizeAdder;
-    size_t strobeSignal = 0;
-    for (size_t i = 0; i < tmp; ++i) {
-      strobeSignal = tmp - i - 1;
+  //  {
+  //    bool cFlag = false, oFlag = false;
+  //    size_t tmp = sizeReg / sizeAdder;
+  //    size_t strobeSignal = 0;
+  //    for (size_t i = 0; i < tmp; ++i) {
+  //      strobeSignal = tmp - i - 1;
 
-      Register tmpA = mulA.mux(strobeSignal);
-      tmpA.printShortLogData("regA" + to_string(i + 1));
+  //      Register tmpA = mulA.mux(strobeSignal);
+  //      tmpA.printShortLogData("regA" + to_string(i + 1));
 
-      Register tmpB = mulB.mux(strobeSignal);
-      tmpB.printShortLogData("regB" + to_string(i + 1));
+  //      Register tmpB = mulB.mux(strobeSignal);
+  //      tmpB.printShortLogData("regB" + to_string(i + 1));
 
-      //      Adder adder(tmpA, tmpB, sizeAdder);
-      Register sum = adder.summ(tmpA, tmpB, cFlag);
-      sum.printShortLogData("temSum" + to_string(i + 1));
-      demux.demux(regC, sum, strobeSignal);
-      cFlag = adder.getCarryFlag();
-    }
+  //      //      Adder adder(tmpA, tmpB, sizeAdder);
+  //      Register sum = adder.summ(tmpA, tmpB, cFlag);
+  //      sum.printShortLogData("temSum" + to_string(i + 1));
+  //      demux.demux(regC, sum, strobeSignal);
+  //      cFlag = adder.getCarryFlag();
+  //    }
 
-    if (cFlag) {
-      Log(INFO) << "A sign overflow has occurred...";
-      Log(INFO) << "The result is corrected by adding 1 to the least "
-                   "significant digit.";
-      Multiplexer mulC(regC, sizeReg, sizeAdder);
-      mulB.printLogData(stringify(mulC));
-      regC = Register(sizeReg, regA.getRepresentation());
-      strobeSignal = 0;
-      oFlag = cFlag;
-      cFlag = false;
-      for (size_t i = 0; i < tmp; ++i) {
-        strobeSignal = tmp - i - 1;
+  if (/*cFlag*/ alu.getOF()) {
+    Log(INFO) << "A sign overflow has occurred...";
+    Log(INFO) << "The result is corrected by adding 1 to the least "
+                 "significant digit.";
+    regC = alu.inc(regC);
+    //    Multiplexer mulC(regC, sizeReg, sizeAdder);
+    //    mulC.printLogData(stringify(mulC));
+    //    regC = Register(sizeReg, regA.getRepresentation());
+    //    strobeSignal = 0;
+    //    oFlag = cFlag;
+    //    cFlag = false;
+    //    for (size_t i = 0; i < tmp; ++i) {
+    //      strobeSignal = tmp - i - 1;
 
-        Register tmpC = mulC.mux(strobeSignal);
-        tmpC.printShortLogData("regC" + to_string(i + 1));
+    //      Register tmpC = mulC.mux(strobeSignal);
+    //      tmpC.printShortLogData("regC" + to_string(i + 1));
 
-        Register sum = adder.summ(tmpC, oFlag, cFlag);
-        oFlag = false;
-        sum.printShortLogData("temSum" + to_string(i + 1));
-        demux.demux(regC, sum, strobeSignal);
-        //        regC.printShortLogData("regC" + to_string(i + 1));
-        cFlag = adder.getCarryFlag();
-      }
-    }
+    //      Register sum = adder.summ(tmpC, oFlag, cFlag);
+    //      oFlag = false;
+    //      sum.printShortLogData("temSum" + to_string(i + 1));
+    //      demux.demux(regC, sum, strobeSignal);
+    //      //        regC.printShortLogData("regC" + to_string(i + 1));
+    //      cFlag = adder.getCarryFlag();
+    //    }
   }
 
-  //  Log(INFO) << "Register C info";
+  ////  Log(INFO) << "Register C info";
   regC.setMSB();
-  //  cout << regC.getRepresentation();
-  //  regC.printLogData("regC");
+  ////  cout << regC.getRepresentation();
+  ////  regC.printLogData("regC");
   regC.setNumberRepresentation(-1);
   regC.printLogData(string("regC"));
   Log(INFO) << "Result of operation is: "
             << regC.convertBinaryToDecimalString();
   //  Register regC = demux.getDemuxResult();
+
+  return 0;
+}
+
+int mulNums(int64_t num1, int64_t num2) {
+
+  Register regA(num1, sizeReg, SIGN_MAGNITUDE_REPR);
+  regA.setNumberRepresentation(ONES_COMPLEMENT_REPR);
+  regA.printLogData(stringify(regA));
+
+  Register regB(num2, sizeReg, SIGN_MAGNITUDE_REPR);
+  regB.setNumberRepresentation(ONES_COMPLEMENT_REPR);
+  regB.printLogData(stringify(regB));
+
+  ALU alu(sizeAdder);
+  Demultiplexer demux(sizeReg, sizeAdder);
+
+  Register regC = alu.mul2(regA, regB);
+
+  regC.printLogData(string("regC"));
+  Log(INFO) << "Result of operation is: "
+            << regC.convertBinaryToDecimalString();
+
+  return 0;
 }
 
 string getUserInputAsUInt32(string input, int64_t min, int64_t max) {
@@ -586,3 +750,50 @@ bool numberValidation(string input, int64_t min, int64_t max, int64_t *num) {
   }
   //  return number;
 }
+
+// void performAdditionAndSubstruction(QCommandLineParser &parser,
+// QCommandLineOption &option){
+//    QString tmp = parser.value(option);
+
+//    auto nums =
+//        tmp.split(QRegularExpression("[,\\s]+"), QString::SkipEmptyParts);
+
+//    if (nums.count() != 2) {
+//      Log(ERROR) << "Invalid number of params at " << tmp.toStdString()
+//                 << ": argument should contain "
+//                    "2 numbers, separated by comma";
+
+//    }
+
+////      CMD_ERROR_RETURN
+
+//    str1 = nums.at(0).toStdString();
+
+//    str2 = nums.at(1).toStdString();
+//    {
+//      auto sz = (1 << (sizeReg - 1));
+//      if (numberValidation(str1, -sz, (sz - 1), &num1) &&
+//          numberValidation(str2, -sz, (sz - 1), &num2)) {
+
+//        if (abs(num1) < abs(num2)) {
+//          Log(ERROR) << "Invalid param at " << tmp.toStdString() << ": " <<
+//          num1
+//                     << " should be greater than " << num2
+//                     << " in absolute value.";
+
+////          CMD_ERROR_RETURN
+//        }
+//      }
+//    }
+//    if (option == opt) {
+
+//    } else {
+//    }
+//    int status = addingSignMagnitude(num1, num2);
+
+//    if (status == 1) {
+////      CMD_ERROR_RETURN
+//    }
+////    OK_RETURN
+
+//};
