@@ -639,11 +639,11 @@ int addingOnesComlement(/*string str1, string str2*/ int64_t num1,
 int mulNums(int64_t num1, int64_t num2) {
 
   Register regA(num1, sizeReg, SIGN_MAGNITUDE_REPR);
-  regA.setNumberRepresentation(ONES_COMPLEMENT_REPR);
+  //  regA.setNumberRepresentation(ONES_COMPLEMENT_REPR);
   regA.printLogData(stringify(regA));
 
   Register regB(num2, sizeReg, SIGN_MAGNITUDE_REPR);
-  regB.setNumberRepresentation(ONES_COMPLEMENT_REPR);
+  //  regB.setNumberRepresentation(ONES_COMPLEMENT_REPR);
   regB.printLogData(stringify(regB));
 
   ALU alu(sizeAdder);
