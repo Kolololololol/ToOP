@@ -9,7 +9,9 @@
 
 #include <deque>
 using namespace std;
-
+// extern bool noAdderLog;
+// noAdderLog = true
+;
 class ALU {
 
   struct FLAGS {
@@ -23,6 +25,7 @@ class ALU {
 
   uint16_t size;
   FLAGS flags;
+  bool noAdderLog = false;
 
 public:
   ALU(uint16_t sz) : size(sz) { initFLAGS(); };
@@ -52,6 +55,9 @@ public:
   Register shr(Register &A, uint16_t pos);
   Register shl(Register &A);
   Register shl(Register &A, uint16_t pos);
+
+  bool getCF() { return flags.CF; }
+  bool getOF() { return flags.OF; }
 
   //  Register or(Register &A, Register &B);
   //  Register and(Register &A, Register &B);

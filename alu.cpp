@@ -36,14 +36,18 @@ Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
   }
   uint16_t szReg = A.getSize();
   Multiplexer mulA(A, szReg, size);
-  mulA.printLogData(stringify(mulA));
+
   //  Log(INFO) << "Multiplexer B info";
   Multiplexer mulB(B, szReg, size);
-  mulB.printLogData(stringify(mulB));
 
   Demultiplexer demux(szReg, size);
   Register regC(szReg, A.getRepresentation());
-
+  //  if (noAdderLog) {
+  if (!noAdderLog) {
+    mulA.printLogData("regA");
+    mulB.printLogData("regB");
+    demux.printLogData("demuxer");
+  }
   //    bool flag = false;
 
   size_t strobeSignal = 0;
@@ -57,14 +61,22 @@ Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
     //      Adder adder(tmpA, tmpB, sizeAdder);
     Register sum = adc(tmpA, tmpB);
 
-#ifdef NO_ADDER_LOG
-    tmpA.printShortLogData("regA" + to_string(i + 1));
-    tmpB.printShortLogData("regB" + to_string(i + 1));
-
-    sum.printShortLogData("temSum" + to_string(i + 1));
-#endif
-
     demux.demux(regC, sum, strobeSignal);
+    //    if (noAdderLog) {
+    if (!noAdderLog) {
+      Log(INFO) << "Multiplexer mulA succefully return part no " << (i + 1)
+                << " of register regA.";
+      tmpA.printShortLogData("regA" + to_string(i + 1));
+      Log(INFO) << "Multiplexer mulB succefully return part no " << (i + 1)
+                << " of register regB.";
+      tmpB.printShortLogData("regB" + to_string(i + 1));
+      Log(INFO) << "The result of adding: ";
+      sum.printShortLogData("temSum" + to_string(i + 1));
+      //    }
+      Log(INFO) << "Demultiplexer demux succefully add part no " << (i + 1)
+                << " to register regC.";
+    }
+
     //      flag = adder.getCarryFlag();
   }
   flags.OF = flags.CF;
@@ -115,25 +127,54 @@ Register ALU::mul2(Register &A, Register &B) {
   uint16_t regSize = A.getSize();
   A.setSign(false);
   B.setSign(false);
+  Log(INFO) << "Multiplier register is being expanded...";
+  Register regAHigh(regSize, SIGN_MAGNITUDE_REPR);
+  regAHigh.reserve(regSize);
+  Log(INFO) << "Register regAHigh initialization...";
+  Log(INFO) << "Register regAHigh was succefully initialized with zero value.";
+
+  Log(INFO) << "Product register initialization...";
+  Log(INFO) << "Product register is being expanded...";
   Register regCHigh(regSize, SIGN_MAGNITUDE_REPR);
   regCHigh.reserve(regSize);
+  Log(INFO) << "Register regCHigh initialization...";
+  Log(INFO) << "Register regCHigh was succefully initialized with zero value.";
+
+  //  Log(INFO) << "Multiplexer " << mulAlias << " was succefully initialized.";
   Register regCLow(regSize, SIGN_MAGNITUDE_REPR);
   regCLow.reserve(regSize);
-  Register AHigh(regSize, SIGN_MAGNITUDE_REPR);
-  AHigh.reserve(regSize);
-//  tmpB.reserve(regSize);
-#define NO_ADDER_LOG
+  Log(INFO) << "Register regCLow initialization...";
+  Log(INFO) << "Register regCLow was succefully initialized with zero value.";
+
+  //  tmpB.reserve(regSize);
+
+  noAdderLog = true;
   for (auto i = B.getSize() - 1; i > 0; --i) {
     if (B[i]) {
       regCLow = add(A, regCLow);
-      regCHigh = add(AHigh, regCHigh);
+      Log(INFO) << "The operation of adding the lower part of the register "
+                   "regA and regC was performed.";
+      regCLow.printShortLogData("regCLow");
+      regCHigh = add(regAHigh, regCHigh);
+      Log(INFO) << "The operation of adding the upper part of the register "
+                   "regA and regC was performed.";
+      regCLow.printShortLogData("regCHigh");
     }
-    shl(A);
+    A = shl(A);
+    Log(INFO) << "A logical shift operation to the left was performed for he "
+                 "lower part of the register regA (regALow).";
+    A.printShortLogData("regALow");
     bool bit = flags.CF;
-    shl(AHigh);
-    AHigh[regSize - 1] = bit;
+    regAHigh = shl(regAHigh);
+    Log(INFO) << "A logical shift operation to the left was performed for he "
+                 "upper part of the register regA (regAHigh).";
+    regAHigh.printShortLogData("regAHigh");
+    regAHigh[regSize - 1] = bit;
+    Log(INFO) << "The carry flag was saved to the least significant bit.";
+    regAHigh.printShortLogData("regAHigh");
   }
-#undef NO_ADDER_LOG
+  noAdderLog = false;
+
   regCHigh.setSign(sign);
   regCHigh.setMSB();
   Register result(regSize * 2, regCHigh.getRepresentation());
