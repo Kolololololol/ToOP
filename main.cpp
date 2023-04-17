@@ -384,25 +384,27 @@ int main(int argc, char *argv[]) {
     //    str1 = getUserInputAsUInt32()
     //    cout << str1 << "\n";
     str2 = nums.at(1).toStdString();
-    cout << "aaa";
+
     {
       auto sz = (1 << (sizeReg - 1));
-      if (numberValidation(str1, -sz, (sz - 1), &num1) &&
-          numberValidation(str2, -sz, (sz - 1), &num2)) {
+      if ((numberValidation(str1, -sz, (sz - 1), &num1) &&
+           numberValidation(str2, -sz, (sz - 1), &num2))) {
         //          cout << num2;
         //          cout << num1;
-        if (abs(num1) < abs(num2)) {
-          Log(ERROR) << "Invalid param at " << tmp.toStdString() << ": " << num1
-                     << " should be greater than " << num2
-                     << " in absolute value.";
+        //        if (abs(num1) < abs(num2)) {
+        //        Log(ERROR) << "Invalid param at " << tmp.toStdString() << ": "
+        //        << num1
+        //                   << " should be greater than " << num2
+        //                   << " in absolute value.";
 
-          CMD_ERROR_RETURN
-        }
+        //        CMD_ERROR_RETURN
+        //        }
       }
     }
     //      cout << num1 << endl;
     //      cout << num2 << endl;
     //      int tmp = addingSignMagnitude(str1, str2);
+    //    cout << num2 << "\n";
     int status = mulNums(num1, num2);
 
     //    int status = addingOnesComlement(num1, num2);
@@ -715,13 +717,13 @@ bool numberValidation(string input, int64_t min, int64_t max, int64_t *num) {
     size_t length = input.length();
     if (length == 0) {
       Log(ERROR) << "Input data is empty!";
-      //      cout << input;
+
       return false;
     }
     if (input[0] == '-') {
       length--;
     }
-
+    //    cout << input;
     const int64_t digitsCount =
         count_if(input.begin(), input.end(),
                  [](unsigned char ch) { return isdigit(ch); });
