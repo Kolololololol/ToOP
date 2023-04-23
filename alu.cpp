@@ -241,7 +241,8 @@ Register ALU::div2(Register &A, Register &B) {
   //  regTmp = add(regBTCR, A);
   regTmp = sub(A, B);
   if (!regTmp.getMSB()) {
-    return NULL;
+    Register emptyReg;
+    return emptyReg;
   }
   //  regTmp.setMSB();
   Log(INFO) << "regA\t" << regTmp.printRegister();

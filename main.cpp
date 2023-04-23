@@ -734,6 +734,11 @@ int divNums(int64_t num1, int64_t num2) {
   Demultiplexer demux(sizeReg, sizeAdder);
 
   Register regC = alu.div2(regA, regB);
+  if (regC.isEmpty()) {
+    //      Log(INFO) << "Value of regA is greater than value of regB.";
+    Log(ERROR) << "A mismatch was found: regA is greater than regB";
+    return 1;
+  }
 
   regC.printLogData(string("regC"));
   Log(INFO) << "Result of operation is: "
