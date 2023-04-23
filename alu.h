@@ -82,8 +82,11 @@ private:
 //};
 
 extern inline Register ALU::sub(Register &A, Register &B) {
-  B = neg(B);
-  return add(A, B);
+  Register notB = B;
+  notB = neg(notB);
+  //    B = neg(B);
+  notB.setNumberRepresentation(TWOS_COMPLEMENT_REPR);
+  return add(A, notB);
 };
 
 extern inline Register ALU::inc(Register &A) {
@@ -99,7 +102,9 @@ extern inline Register ALU::neg(Register &A) {
   A.setNumberRepresentation(-1);
   A.flip(0);
   A.setMSB();
-  A.setNumberRepresentation(repr);
+  if (!(repr == A.getRepresentation())) {
+    A.setNumberRepresentation(repr);
+  }
   return A;
 };
 

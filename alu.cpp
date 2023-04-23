@@ -28,7 +28,7 @@ Register ALU::adc(Register &A, Register &B) {
 
 Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
   initFLAGS();
-    uint16_t times = A.getSize() / size;
+  uint16_t times = A.getSize() / size;
   if (times == 1) {
     Register reg = adc(A, B);
 
@@ -80,7 +80,7 @@ Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
 
     //      flag = adder.getCarryFlag();
   }
-//  regC.setSign(A.getMSB());
+  //  regC.setSign(A.getMSB());
   regC.setMSB();
   flags.OF = flags.CF;
   flags.SF = regC.getMSB();
@@ -219,17 +219,14 @@ Register ALU::div2(Register &A, Register &B) {
 
   bool sign = A.getMSB() ^ B.getMSB();
   uint16_t regSize = A.getSize();
-//  A.setSign(false);
+  //  A.setSign(false);
   B.setSign(false);
   B.setMSB();
-  Log(INFO) << "Multiplier register is being expanded...";
-  Register regAHigh(regSize, SIGN_MAGNITUDE_REPR);
-  regAHigh.reserve(regSize);
-  Log(INFO) << "Register regAHigh initialization...";
-  Log(INFO) << "Register regAHigh was succefully initialized with zero value.";
+  A.setSign(false);
+  A.setMSB();
 
   Log(INFO) << "Product register initialization...";
-  Log(INFO) << "Product register is being expanded...";
+  Log(INFO) << "Product register was succefully initialized with zero value.";
   Register regC(regSize, SIGN_MAGNITUDE_REPR);
   regC.reserve(regSize);
 
@@ -241,32 +238,43 @@ Register ALU::div2(Register &A, Register &B) {
 
   noAdderLog = true;
   auto cnt = 0;
-  regTmp = add(regBTCR, A);
+  //  regTmp = add(regBTCR, A);
+  regTmp = sub(A, B);
   if (!regTmp.getMSB()) {
     return NULL;
   }
-//  regTmp.setMSB();
-  Log(INFO) << "SumC\t" << regTmp.printRegister();
+  //  regTmp.setMSB();
+  Log(INFO) << "regA\t" << regTmp.printRegister();
   Log(INFO) << "RegC\t" << regC.printRegister();
   regC[regSize - 1] = !regTmp.getMSB();
-  while (cnt < regSize-1) {
-
+  while (cnt < regSize - 1) {
+    Log(INFO) << "Left shift regA.";
     regTmp = shl(regTmp);
-	    Log(INFO) << "SumC\t" << regTmp.printRegister();
+    Log(INFO) << "regA\t" << regTmp.printRegister();
     //    bool bit = flags.CF;
     //    regAHigh = shl(regAHigh);
 
     //    regAHigh[regSize - 1] = bit;
     if (regTmp.getMSB()) {
-		regTmp = add(B, regTmp);
+      Log(INFO) << "regA is below 0";
+      Log(INFO) << "Сorrection of the result by adding the value of register B";
+      regTmp = add(B, regTmp);
     } else {
-      regTmp = add(regTmp, regBTCR);
+      //      regTmp = add(regBTCR, regTmp);
+      Log(INFO) << "regA is above 0";
+      Log(INFO) << "Subtraction from register A the value of register B";
+      regTmp = sub(regTmp, B);
     }
     regTmp.setMSB();
-	regC = shl(regC);
+    Log(INFO) << "regA\t" << regTmp.printRegister();
+    regC = shl(regC);
+    Log(INFO) << /*"A logical shift operation to the left was performed for the
+                 " "register */
+        "Left shift regC.";
+    Log(INFO) << "Adding a new digit to the end of regC";
     regC[regSize - 1] = !regTmp.getMSB();
-	Log(INFO) << "SumC\t" << regTmp.printRegister();
-	Log(INFO) << "RegC\t" << regC.printRegister();
+    //    Log(INFO) << "regA\t" << regTmp.printRegister();
+    Log(INFO) << "RegC\t" << regC.printRegister();
     ++cnt;
   }
   //    for (auto i = B.getSize() - 1; i > 0; --i) {
