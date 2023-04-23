@@ -45,6 +45,7 @@ int addingSignMagnitude(/*string str1, string str2*/ int64_t num1,
 int addingOnesComlement(/*string str1, string str2*/ int64_t num1,
                         int64_t num2);
 int mulNums(int64_t num1, int64_t num2);
+int divNums(int64_t num1, int64_t num2);
 void performAdditionAndSubstruction(QCommandLineParser &parser,
                                     QCommandLineOption &option);
 
@@ -416,6 +417,65 @@ int main(int argc, char *argv[]) {
     OK_RETURN
   }
 
+  if (parser.isSet(optDivTwo)) {
+    QString tmp = parser.value(optDivTwo);
+
+    auto nums =
+        tmp.split(QRegularExpression("[,\\s]+"), QString::SkipEmptyParts);
+    //    QRegularExpression reA("/(?<=^|)-?\\d+(?=|$)/gx");
+    //    cout << tmp.toStdString();
+    if (nums.count() != 2) {
+      Log(ERROR) << "Invalid number of params at " << tmp.toStdString()
+                 << ": argument should contain "
+                    "2 numbers, separated by comma";
+
+      CMD_ERROR_RETURN
+    }
+
+    //    if (!parser.isSet(optRegisterSize)) {
+
+    //    if (!parser.isSet(optOperation)) {
+    //      Log(ERROR) << "Operation type is not set.";
+
+    //      CMD_ERROR_RETURN
+    //    }
+
+    str1 = nums.at(0).toStdString();
+    //    str1 = getUserInputAsUInt32()
+    //    cout << str1 << "\n";
+    str2 = nums.at(1).toStdString();
+
+    {
+      auto sz = (1 << (sizeReg - 1));
+      if ((numberValidation(str1, -sz, (sz - 1), &num1) &&
+           numberValidation(str2, -sz, (sz - 1), &num2))) {
+        //          cout << num2;
+        //          cout << num1;
+        //        if (abs(num1) < abs(num2)) {
+        //        Log(ERROR) << "Invalid param at " << tmp.toStdString() << ": "
+        //        << num1
+        //                   << " should be greater than " << num2
+        //                   << " in absolute value.";
+
+        //        CMD_ERROR_RETURN
+        //        }
+      }
+    }
+    //      cout << num1 << endl;
+    //      cout << num2 << endl;
+    //      int tmp = addingSignMagnitude(str1, str2);
+    //    cout << num2 << "\n";
+    int status = divNums(num1, num2);
+
+    //    int status = addingOnesComlement(num1, num2);
+    //      int tmp = ad
+
+    if (status == 1) {
+      CMD_ERROR_RETURN
+    }
+    OK_RETURN
+  }
+
   //  if (parser.isSet(optOperation)) {
   //    operSign =
   //    static_cast<char>(parser.value(optOperation).at(0).toLatin1());
@@ -656,6 +716,28 @@ int mulNums(int64_t num1, int64_t num2) {
   regC.printLogData(string("regC"));
   Log(INFO) << "Result of operation is: "
             << regC.convertBinaryToDecimalString();
+
+  return 0;
+}
+
+int divNums(int64_t num1, int64_t num2) {
+
+  Register regA(num1, sizeReg, SIGN_MAGNITUDE_REPR);
+  //  regA.setNumberRepresentation(ONES_COMPLEMENT_REPR);
+  regA.printLogData(stringify(regA));
+
+  Register regB(num2, sizeReg, SIGN_MAGNITUDE_REPR);
+  //  regB.setNumberRepresentation(ONES_COMPLEMENT_REPR);
+  regB.printLogData(stringify(regB));
+
+  ALU alu(sizeAdder);
+  Demultiplexer demux(sizeReg, sizeAdder);
+
+  Register regC = alu.div2(regA, regB);
+
+  regC.printLogData(string("regC"));
+  Log(INFO) << "Result of operation is: "
+            << regC.convertBinaryToDecimalString(true);
 
   return 0;
 }
