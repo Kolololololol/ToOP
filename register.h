@@ -53,6 +53,12 @@ public:
         };
   Register(string &boolStr, uint16_t sz, uint16_t repr);
   Register(int64_t &num, uint16_t sz, uint16_t repr);
+  Register(const Register &reg) {
+    number = reg.getNumber();
+    size = reg.getSize();
+    representation = reg.getRepresentation();
+    MSB = reg.getMSB();
+  }
   //  uint16_t getRepresentation() { return representation; }
   void setNumberRepresentation(int type);
   void printLogData(string regAlias) {
@@ -140,9 +146,9 @@ public:
     number[0] = sign;
     //    cout << MSB;
   }
-  string convertBinaryToDecimalString();
+  string convertBinaryToDecimalString(bool isFloat = false);
 
-  bool getMSB() { return MSB; }
+  bool getMSB() const { return MSB; }
 };
 
 #endif // REGISTER_H
