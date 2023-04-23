@@ -47,6 +47,7 @@ public:
   Register sal(Register &A, uint16_t pos);
 
   Register mul2(Register &A, Register &B);
+  Register div2(Register &A, Register &B);
   //  Register scr(Register &A, Register &B);
   //  Register scl(Register &A, Register &B);
 

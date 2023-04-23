@@ -27,7 +27,8 @@ Register ALU::adc(Register &A, Register &B) {
 };
 
 Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
-  uint16_t times = A.getSize() / size;
+  initFLAGS();
+    uint16_t times = A.getSize() / size;
   if (times == 1) {
     Register reg = adc(A, B);
 
@@ -79,6 +80,8 @@ Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
 
     //      flag = adder.getCarryFlag();
   }
+//  regC.setSign(A.getMSB());
+  regC.setMSB();
   flags.OF = flags.CF;
   flags.SF = regC.getMSB();
 
@@ -95,6 +98,7 @@ Register ALU::shl(Register &A) {
   //  flags.OF = tmpMSB ^ A[0];
   A.removeFront();
   A.add();
+  A.setMSB();
   return A;
 };
 
@@ -209,6 +213,100 @@ Register ALU::mul2(Register &A, Register &B) {
   //  }
 
   return result;
+}
+
+Register ALU::div2(Register &A, Register &B) {
+
+  bool sign = A.getMSB() ^ B.getMSB();
+  uint16_t regSize = A.getSize();
+//  A.setSign(false);
+  B.setSign(false);
+  B.setMSB();
+  Log(INFO) << "Multiplier register is being expanded...";
+  Register regAHigh(regSize, SIGN_MAGNITUDE_REPR);
+  regAHigh.reserve(regSize);
+  Log(INFO) << "Register regAHigh initialization...";
+  Log(INFO) << "Register regAHigh was succefully initialized with zero value.";
+
+  Log(INFO) << "Product register initialization...";
+  Log(INFO) << "Product register is being expanded...";
+  Register regC(regSize, SIGN_MAGNITUDE_REPR);
+  regC.reserve(regSize);
+
+  Register regTmp(regSize, SIGN_MAGNITUDE_REPR);
+  regTmp.reserve(regSize);
+  Register regBTCR(B);
+  regBTCR = neg(regBTCR);
+  regBTCR.setNumberRepresentation(TWOS_COMPLEMENT_REPR);
+
+  noAdderLog = true;
+  auto cnt = 0;
+  regTmp = add(regBTCR, A);
+  if (!regTmp.getMSB()) {
+    return NULL;
+  }
+//  regTmp.setMSB();
+  Log(INFO) << "SumC\t" << regTmp.printRegister();
+  Log(INFO) << "RegC\t" << regC.printRegister();
+  regC[regSize - 1] = !regTmp.getMSB();
+  while (cnt < regSize-1) {
+
+    regTmp = shl(regTmp);
+	    Log(INFO) << "SumC\t" << regTmp.printRegister();
+    //    bool bit = flags.CF;
+    //    regAHigh = shl(regAHigh);
+
+    //    regAHigh[regSize - 1] = bit;
+    if (regTmp.getMSB()) {
+		regTmp = add(B, regTmp);
+    } else {
+      regTmp = add(regTmp, regBTCR);
+    }
+    regTmp.setMSB();
+	regC = shl(regC);
+    regC[regSize - 1] = !regTmp.getMSB();
+	Log(INFO) << "SumC\t" << regTmp.printRegister();
+	Log(INFO) << "RegC\t" << regC.printRegister();
+    ++cnt;
+  }
+  //    for (auto i = B.getSize() - 1; i > 0; --i) {
+  //      if (B[i]) {
+  //        regCLow = add(A, regCLow);
+
+  //        regCHigh = add(regAHigh, regCHigh);
+
+  //        Log(INFO) << "RegC\t" << regCHigh.printRegister() << ' '
+  //                  << regCLow.printRegister();
+  //      }
+  //      A = shl(A);
+
+  //  Log(INFO) << "A logical shift operation to the left was performed for he "
+  //               "register regA.";
+
+  //  bool bit = flags.CF;
+  //  regAHigh = shl(regAHigh);
+
+  //  regAHigh[regSize - 1] = bit;
+
+  //  Log(INFO) << "RegA\t" << regAHigh.printRegister() << ' ' <<
+  //  A.printRegister();
+
+  //  noAdderLog = false;
+
+  //  regCHigh.setSign(sign);
+  //  regCHigh.setMSB();
+  //  Register result(regSize * 2, regCHigh.getRepresentation());
+  //  Demultiplexer demux(regSize * 2, size);
+  //  uint16_t times = regSize / size;
+  //  size_t strobeSignal = times - 1;
+
+  //  demux.demux(result, regCLow, strobeSignal);
+  //  strobeSignal--;
+  //  demux.demux(result, regCHigh, strobeSignal);
+  regC.setSign(sign);
+  regC.setMSB();
+
+  return regC;
 }
 
 // Register ALU::sar(Register &A, Register &B){};
