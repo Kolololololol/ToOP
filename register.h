@@ -39,7 +39,7 @@ class Register {
                                         "two`s complement"};
 
 public:
-  Register();
+  Register(){};
   Register(uint16_t sz, uint16_t repr)
       : size(sz), representation(repr){
                       //    Log(INFO) << "Register initialization...";
@@ -149,6 +149,8 @@ public:
   string convertBinaryToDecimalString(bool isFloat = false);
 
   bool getMSB() const { return MSB; }
+
+  bool isEmpty() { return number.empty(); }
 };
 
 #endif // REGISTER_H
