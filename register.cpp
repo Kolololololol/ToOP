@@ -9,10 +9,23 @@ Register::Register(int64_t &num, uint16_t sz, uint16_t repr) {
     num = -num;
   }
 
-  number = convertDecimalToBinaryString(num);
+  if (representation == BCD_SIGN_MAGNITUDE_REPR ||
+      representation == BCD_ONES_COMPLEMENT_REPR) {
+    number = convertDecimalToBinaryBCD3String(num);
+    //	if (representation == BCD_SIGN_MAGNITUDE_REPR) {
+    //    number.push_front(MSB);
+    //	  number.push_front(false);
+    //	  number.push_front(false);
+    //	  number.push_front(false);
+    //    }
 
-  if (representation == SIGN_MAGNITUDE_REPR) {
-    number.push_front(MSB);
+  } else {
+
+    number = convertDecimalToBinaryString(num);
+
+    if (representation == SIGN_MAGNITUDE_REPR) {
+      number.push_front(MSB);
+    }
   }
 }
 
@@ -103,17 +116,37 @@ deque<bool> Register::convertDecimalToBinaryString(string str) {
   return result;
 }
 
-string Register::convertBinaryToDecimalString() {
+string Register::convertBinaryToDecimalString(bool isFloat) {
   string buf;
   buf.reserve(number.size());
-  for (auto iter = number.begin() + 1; iter != number.end(); ++iter) {
-    buf += *iter + '0';
+
+  if (!isFloat) {
+    long long int num;
+    for (auto iter = number.begin() + 1; iter != number.end(); ++iter) {
+      buf += *iter + '0';
+    }
+    size_t pos{};
+    num = stoll(buf, &pos, 2); // символы ответа в
+    buf.clear();
+    buf = to_string(num);
+  } else {
+    double num = 0.0;
+    //    for (int const &i : number) {
+    //      if (number[i]) {
+    //        num += pow(2, -i);
+    //      }
+    //    }
+    for (uint16_t i = 1; i < number.size(); ++i) {
+      if (number[i]) {
+        num += pow(2, -i);
+      }
+    }
+    buf.clear();
+    buf = to_string(num);
+
+    buf.replace(1, 1, ",");
   }
 
-  size_t pos{};
-  long long int num = stoll(buf, &pos, 2); // символы ответа в
-  buf.clear();
-  buf = to_string(num);
   if (number[0]) {
     buf.reserve(buf.length() + 1);
     buf.insert(0, "-");
@@ -126,6 +159,45 @@ string Register::convertBinaryToDecimalString() {
   //    cnt++;
   //  } while (num > 0);
   //  return result;
+
+  return buf;
+}
+
+string Register::convertBCD3ToDecimalString(uint16_t numSize) {
+  string buf = "";
+  buf.reserve(number.size());
+
+  long long int num = 0;
+  auto iter = number.cend() - 1;
+  //  auto cnt = 3;
+
+  uint16_t sz;
+  do {
+    for (auto cnt = 0; cnt < 4; ++cnt) {
+      num += (*iter--) << cnt;
+    }
+    //    iter += 7;
+
+    buf = to_string(num) + buf;
+    num = 0;
+  } while (++sz < numSize);
+
+  //  for (auto i = 3; i < size; i += 7) {
+  //    num += number[i] * (1 << (i % 4));
+  //  }
+
+  //  for (auto iter = number.begin() + 1; iter != number.end(); ++iter) {
+  //    buf += *iter + '0';
+  //  }
+  //  size_t pos{};
+  //  num = stoll(buf, &pos, 2); // символы ответа в
+  //  buf.clear();
+  //  buf = to_string(num);
+
+  if (MSB) {
+    buf.reserve(buf.length() + 1);
+    buf.insert(0, "-");
+  }
   return buf;
 }
 
@@ -141,6 +213,64 @@ deque<bool> Register::convertDecimalToBinaryString(int64_t &num) {
   while (result.size() < size - 1) {
     result.push_front(false);
   }
+  return result;
+}
+
+deque<bool> Register::convertDecimalToBinaryBCD3String(int64_t &num) {
+  deque<bool> result;
+  int64_t tmpNum = num;
+  int8_t digit;
+  //  auto s = std::to_string(tmpNum);
+  //  s.assign(s.rbegin(), s.rend());
+
+  //  for (; ; ) {
+
+  //  }
+  do {
+    digit = tmpNum % 10;
+    do {
+      result.push_front(digit % 2 == 1);
+      digit >>= 1;
+    } while (digit > 0);
+    while (result.size() % 4 != 0) {
+      result.push_front(false);
+    }
+    tmpNum /= 10;
+  } while (tmpNum > 0);
+  //  if (size >> 3 != 0) {
+  //    size += 4;
+  //  }
+  size_t sz = result.size();
+  while (sz < size - 1) {
+    result.push_front(false);
+    result.push_front(false);
+    result.push_front(false);
+    result.push_front(false);
+    sz += 4;
+  }
+
+  //  do {
+  //    digit = tmpNum % 10;
+  //    do {
+  //      result.push_back(digit % 2 == 1);
+  //      digit >>= 1;
+  //    } while (digit > 0);
+  //    do {
+  //      result.push_back(false);
+  //    } while (result.size() % 4 != 0);
+  //    tmpNum /= 10;
+  //  } while (tmpNum > 0);
+  //  if (size >> 3 != 0) {
+  //    size += 4;
+  //  }
+  //  size_t sz = result.size();
+  //  while (sz < size - 1) {
+  //    result.push_front(true);
+  //    result.push_front(true);
+  //    result.push_front(false);
+  //    result.push_front(false);
+  //    sz += 4;
+  //  }
   return result;
 }
 
@@ -207,25 +337,86 @@ void Register::setNumberRepresentation(int type) {
   //    }
   //  } else {
   //  }
+  //  if (MSB) {
+  //    switch (representation) {
+  //    case SIGN_MAGNITUDE_REPR: {
+  //      switch (type) {
+  //      case ONES_COMPLEMENT_REPR: {
+  //        convertToOnesComplementRepresentation();
+  //        //        cout << representation;
+  //        representation = type;
+  //      } break;
+
+  //      case TWOS_COMPLEMENT_REPR: {
+  //        convertToTwosComplementRepresentation();
+  //        representation = type;
+  //      } break;
+  //      default:
+  //        Log(ERROR) << "Wrong number representation!";
+  //      }
+  //      break;
+  //    }
+  //    case ONES_COMPLEMENT_REPR: {
+  //      convertToOnesComplementRepresentation();
+  //      representation = SIGN_MAGNITUDE_REPR;
+  //    } break;
+
+  //    case TWOS_COMPLEMENT_REPR: {
+  //      convertToTwosComplementRepresentation();
+  //      representation = SIGN_MAGNITUDE_REPR;
+  //    } break;
+  //    default:
+  //      Log(ERROR) << "Wrong number representation!";
+  //    }
+  //  }
+
+  //  if (MSB && representation == SIGN_MAGNITUDE_REPR) {
+  //    switch (type) {
+  //    case ONES_COMPLEMENT_REPR: {
+  //      convertToOnesComplementRepresentation();
+  //      //        cout << representation;
+  //      representation = type;
+  //    } break;
+
+  //    case TWOS_COMPLEMENT_REPR: {
+  //      convertToTwosComplementRepresentation();
+  //      representation = type;
+  //    } break;
+  //    default:
+  //      Log(ERROR) << "Wrong number representation!";
+  //    }
+  //  }
+
   if (MSB) {
-    switch (representation) {
-    case SIGN_MAGNITUDE_REPR: {
+    if (representation == SIGN_MAGNITUDE_REPR) {
       switch (type) {
       case ONES_COMPLEMENT_REPR: {
         convertToOnesComplementRepresentation();
         //        cout << representation;
-        representation = type;
+        //        representation = type;
       } break;
 
       case TWOS_COMPLEMENT_REPR: {
         convertToTwosComplementRepresentation();
-        representation = type;
+        //        representation = type;
       } break;
       default:
         Log(ERROR) << "Wrong number representation!";
       }
-      break;
+    } else if (representation == BCD_SIGN_MAGNITUDE_REPR &&
+               type == BCD_ONES_COMPLEMENT_REPR) {
+      flip();
+      representation = type;
+    } else {
+      Log(ERROR) << "Wrong number representation!";
     }
+  }
+}
+
+// переводим в ПК
+void Register::setNumberRepresentation() {
+  if (MSB) {
+    switch (representation) {
     case ONES_COMPLEMENT_REPR: {
       convertToOnesComplementRepresentation();
       representation = SIGN_MAGNITUDE_REPR;
@@ -235,11 +426,17 @@ void Register::setNumberRepresentation(int type) {
       convertToTwosComplementRepresentation();
       representation = SIGN_MAGNITUDE_REPR;
     } break;
+    case BCD_ONES_COMPLEMENT_REPR: {
+      flip();
+      representation = BCD_SIGN_MAGNITUDE_REPR;
+    } break;
     default:
       Log(ERROR) << "Wrong number representation!";
     }
   }
 }
+
+void Register::setRepresentation(int type) { representation = type; }
 
 bool operator<(const Register &A, const Register &B) {
   return lexicographical_compare(A.getNumber().begin() + 1, A.getNumber().end(),

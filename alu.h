@@ -26,6 +26,9 @@ class ALU {
   uint16_t size;
   FLAGS flags;
   bool noAdderLog = false;
+  bool allowAF = false;
+  bool blockAF = false;
+  bool prevAF = false;
 
 public:
   ALU(uint16_t sz) : size(sz) { initFLAGS(); };
@@ -34,6 +37,9 @@ public:
   //  Register add(Register &A, Register &B);
   Register adc(Register &A, Register &B);
   Register add(Register &A, Register &B /*, uint16_t times*/);
+  Register addBcd(Register &A, Register &B);
+  Register prn3(Register &A);
+  Register prn(Register &A);
   Register sub(Register &A, Register &B);
   Register sbb(Register &A, Register &B);
   Register inc(Register &A);
@@ -91,10 +97,31 @@ extern inline Register ALU::sub(Register &A, Register &B) {
 
 extern inline Register ALU::inc(Register &A) {
   initFLAGS();
-  Register tmpReg(A.getSize(), SIGN_MAGNITUDE_REPR);
-  tmpReg.reserve(A.getSize());
-  tmpReg[A.getSize() - 1] = true;
-  return add(A, tmpReg);
+  if (A.getRepresentation() == BCD_SIGN_MAGNITUDE_REPR ||
+      A.getRepresentation() == BCD_ONES_COMPLEMENT_REPR) {
+    deque<bool> additionOne;
+    additionOne.push_front(false);
+    additionOne.push_front(false);
+    additionOne.push_front(true);
+    additionOne.push_front(false);
+    for (auto i = 0; i < (A.getSize()) / 4 - 1; ++i) {
+      additionOne.push_front(true);
+      additionOne.push_front(true);
+      additionOne.push_front(false);
+      additionOne.push_front(false);
+    }
+    Register tmpReg(additionOne, A.getSize(), BCD_SIGN_MAGNITUDE_REPR);
+
+    allowAF = true;
+    Register result = add(A, tmpReg);
+    allowAF = false;
+    return result;
+  } else {
+    Register tmpReg(A.getSize(), SIGN_MAGNITUDE_REPR);
+    tmpReg.reserve(A.getSize());
+    tmpReg[A.getSize() - 1] = true;
+    return add(A, tmpReg);
+  }
 };
 
 extern inline Register ALU::neg(Register &A) {

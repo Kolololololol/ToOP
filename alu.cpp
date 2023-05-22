@@ -1,33 +1,112 @@
 #include "alu.h"
 
+#define NIBBLE 4
 // ALU::ALU()
 //{
 
 //}
 
 Register ALU::adc(Register &A, Register &B) {
+  //    initFLAGS();
   bool carryBit = flags.CF;
   bool sumBit;
+
   //  Register result(size);
   deque<bool> result;
   for (auto i = size - 1; i >= 0; --i) {
+    if (blockAF && (i % 4 == 3)) {
+      carryBit = false;
+    }
 
     sumBit = (carryBit ^ A[i] ^ B[i]);
 
     carryBit = (A[i] && B[i]) || (A[i] && carryBit) || (B[i] && carryBit);
 
     result.push_front(sumBit);
+    if (allowAF && i == 4 && !blockAF) {
+      prevAF = carryBit;
+    }
   }
-  flags.CF = carryBit;
-  Register reg(result, result.size(), SIGN_MAGNITUDE_REPR);
+  if (blockAF) {
+    Register reg(result, result.size(), BCD_SIGN_MAGNITUDE_REPR);
+    return reg;
+  } else {
+    flags.CF = carryBit;
+    if (allowAF) {
+      flags.AF = carryBit;
+      Register reg(result, result.size(), BCD_SIGN_MAGNITUDE_REPR);
+      return reg;
+    } else {
+      Register reg(result, result.size(), SIGN_MAGNITUDE_REPR);
+      return reg;
+    }
+  }
 
-  flags.AF = 0;
-  return reg;
   //  return Register(result, result.size(), SIGN_MAGNITUDE_REPR);
+
+  //      bool carryBit = flags.CF;
+  //  bool sumBit;
+  //  deque<bool> result;
+  //  for (auto i = size - 1; i >= 0; --i) {
+  //      sumBit = (flags.CF ^ A[i] ^ B[i]);
+
+  //      flags.AF = (A[i] && B[i]) || (A[i] && flags.AF) || (B[i] && flags.AF);
+  //    if (allowAF) {
+  //      if (i % 4 == 3) {
+  //        if (forbidAF) {
+  //          flags.AF = false;
+  //        } else {
+  //          flags.AF = flags.CF;
+  //        }  //  bool sumBit;
+
+  //  //  Register result(size);
+  //  deque<bool> result;
+  //  for (auto i = size - 1; i >= 0; --i) {
+
+  //    sumBit = (carryBit ^ A[i] ^ B[i]);
+
+  //    carryBit = (A[i] && B[i]) || (A[i] && carryBit) || (B[i] && carryBit);
+
+  //    result.push_front(sumBit);
+  //  }
+  //  flags.CF = carryBit;
+  //  Register reg(result, result.size(), SIGN_MAGNITUDE_REPR);
+
+  //  flags.AF = 0;
+  //  return reg;
+  //  //  return Register(result, result.size(), SIGN_MAGNITUDE_REPR);
+
+  //    bool carryBit = flags.CF;
+
+  //        flags.CF = false;
+  //        sumBit = (flags.AF ^ A[i] ^ B[i]);
+
+  //        flags.AF = (A[i] && B[i]) || (A[i] && flags.AF) || (B[i] &&
+  //        flags.AF);
+  //      }
+  //    } else {
+  //      sumBit = (flags.CF ^ A[i] ^ B[i]);
+
+  //      flags.CF = (A[i] && B[i]) || (A[i] && flags.CF) || (B[i] && flags.CF);
+  //    }
+
+  //    result.push_front(sumBit);
+
+  //    //      flags.CF = carryBit;
+  //  }
+  //  //    flags.CF = carryBit;
+  //  Register reg(result, result.size(), SIGN_MAGNITUDE_REPR);
+
+  //  flags.AF = 0;
+  //  return reg;
 };
 
 Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
   initFLAGS();
+  string correctingRegStr = "";
+  deque<bool> correctingReg;
+  correctingRegStr.reserve(size);
+
   uint16_t times = A.getSize() / size;
   if (times == 1) {
     Register reg = adc(A, B);
@@ -62,8 +141,6 @@ Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
     //      Adder adder(tmpA, tmpB, sizeAdder);
     Register sum = adc(tmpA, tmpB);
 
-    demux.demux(regC, sum, strobeSignal);
-    //    if (noAdderLog) {
     if (!noAdderLog) {
       Log(INFO) << "Multiplexer mulA succefully return part no " << (i + 1)
                 << " of register regA.";
@@ -73,7 +150,35 @@ Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
       tmpB.printShortLogData("regB" + to_string(i + 1));
       Log(INFO) << "The result of adding: ";
       sum.printShortLogData("temSum" + to_string(i + 1));
-      //    }
+    }
+
+    //    корректировка строки
+
+    if (allowAF) {
+      correctingReg.clear();
+      correctingReg.push_front(true);
+      correctingReg.push_front(prevAF);
+      correctingReg.push_front(!prevAF);
+      correctingReg.push_front(!prevAF);
+
+      correctingReg.push_front(true);
+      correctingReg.push_front(flags.AF);
+      correctingReg.push_front(!flags.AF);
+      correctingReg.push_front(!flags.AF);
+      //      correctingRegStr = prevAF ? "0011" : "1101" + correctingRegStr;
+      //      correctingRegStr = flags.AF ? "0011" : "1101" + correctingRegStr;
+      blockAF = true;
+      Register corrReg(correctingReg, correctingReg.size(),
+                       BCD_SIGN_MAGNITUDE_REPR);
+      sum = adc(sum, corrReg);
+      blockAF = false;
+      Log(INFO) << "The result of adding after correction: ";
+      sum.printShortLogData("corrTemSum" + to_string(i + 1));
+    }
+    demux.demux(regC, sum, strobeSignal);
+
+    //    if (noAdderLog) {
+    if (!noAdderLog) {
       Log(INFO) << "Demultiplexer demux succefully add part no " << (i + 1)
                 << " to register regC.";
     }
@@ -81,12 +186,86 @@ Register ALU::add(Register &A, Register &B /*, uint16_t times*/) {
     //      flag = adder.getCarryFlag();
   }
   //  regC.setSign(A.getMSB());
-  regC.setMSB();
   flags.OF = flags.CF;
-  flags.SF = regC.getMSB();
+  if (!blockAF && !allowAF) {
+    regC.setMSB();
 
+  } else {
+    regC.setMSB(A.getMSB() ^ B.getMSB() ^ flags.AF);
+  }
+  //  if (regC.getMSB() && regC.getRepresentation() == BCD_SIGN_MAGNITUDE_REPR)
+  //  {
+  //	  regC.setRepresentation(BCD_ONES_COMPLEMENT_REPR);
+  //  }
+  flags.SF = regC.getMSB();
+  //  regC.setNumberRepresentation();
   return regC;
 };
+
+Register ALU::addBcd(Register &A, Register &B /*, uint16_t times*/) {
+  allowAF = true;
+  Register regC = add(A, B);
+  allowAF = false;
+
+  //  uint16_t correctingStringSize = size;
+
+  //  if (flags.AF) {
+  //      correctingStringSize+=4;
+  //  }
+  //  //  выполняем корректировку тетрад
+  //  string correctingRegStr = "";
+  //  //  deque<bool> tmpRegC = regC.getNumber();
+  //  for (auto i = 0; i < correctingStringSize; i += 4) {
+  //    //      auto j = (i+1)%4;
+  //    if (!regC[i] || (!regC[i + 1] && !regC[i + 2])) {
+  //      correctingRegStr += "1101";
+  //    } else if (regC[i] && (regC[i + 1] || regC[i + 2])) {
+  //      correctingRegStr += "0011";
+  //    }
+  //  }
+  //  forbidAF = true;
+  //  Register correctingReg(correctingRegStr, correctingRegStr.length(),
+  //                         BCD_SIGN_MAGNITUDE_REPR);
+  //  Register result = add(regC, correctingReg);
+  //  forbidAF = false;
+  return regC;
+};
+
+Register ALU::prn3(Register &A) {
+  deque<bool> adj;
+  for (int i = 0; i < A.getSize() / 4; i++) {
+    adj.push_front(true);
+    adj.push_front(true);
+    adj.push_front(false);
+    adj.push_front(false);
+  }
+
+  Register adjust(adj, A.getSize(), BCD_SIGN_MAGNITUDE_REPR);
+  noAdderLog = true;
+  blockAF = true;
+  Register result = add(A, adjust);
+  blockAF = false;
+  noAdderLog = false;
+  return result;
+}
+
+Register ALU::prn(Register &A) {
+  deque<bool> adj;
+  for (int i = 0; i < A.getSize() / 4; i++) {
+    adj.push_front(true);
+    adj.push_front(false);
+    adj.push_front(true);
+    adj.push_front(true);
+  }
+
+  Register adjust(adj, A.getSize(), BCD_SIGN_MAGNITUDE_REPR);
+  noAdderLog = true;
+  blockAF = true;
+  Register result = add(A, adjust);
+  blockAF = false;
+  noAdderLog = false;
+  return result;
+}
 
 extern inline Register ALU::sbb(Register &A, Register &B){
 
@@ -261,10 +440,11 @@ Register ALU::div2(Register &A, Register &B) {
       Log(INFO) << "Сorrection of the result by adding the value of register B";
       regTmp = add(B, regTmp);
     } else {
-      //      regTmp = add(regBTCR, regTmp);
+
       Log(INFO) << "regA is above 0";
       Log(INFO) << "Subtraction from register A the value of register B";
-      regTmp = sub(regTmp, B);
+      regTmp = add(regBTCR, regTmp);
+      //      regTmp = sub(regTmp, B);
     }
     regTmp.setMSB();
     Log(INFO) << "regA\t" << regTmp.printRegister();

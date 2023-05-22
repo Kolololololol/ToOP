@@ -4,10 +4,8 @@
 #define SIGN_MAGNITUDE_REPR 0x00
 #define ONES_COMPLEMENT_REPR 0x01
 #define TWOS_COMPLEMENT_REPR 0x02
-
-#define BOOL_STRING 0x00
-#define NUMERIC_STRING 0x01
-#define INTEGER 0x02
+#define BCD_SIGN_MAGNITUDE_REPR 0x03
+#define BCD_ONES_COMPLEMENT_REPR 0x04
 
 #define stringify(name) #name
 
@@ -32,11 +30,14 @@ class Register {
   string convertNegativeDecimalToBinaryString(long long int n);
   deque<bool> convertDecimalToBinaryString(string str);
   deque<bool> convertDecimalToBinaryString(int64_t &num);
+  deque<bool> convertDecimalToBinaryBCD3String(int64_t &num);
+
   void convertToOnesComplementRepresentation();
   void convertToTwosComplementRepresentation();
 
-  const char *representationNames[3] = {"sign magnitude", "one`s complement",
-                                        "two`s complement"};
+  const char *representationNames[5] = {
+      "sign magnitude", "one`s complement", "two`s complement",
+      "binary coded decimal", "binary coded decimal one`s complement"};
 
 public:
   Register(){};
@@ -61,6 +62,10 @@ public:
   }
   //  uint16_t getRepresentation() { return representation; }
   void setNumberRepresentation(int type);
+  void setNumberRepresentation();
+  void setRepresentation(int type);
+  string convertBinaryToDecimalString(bool isFloat = false);
+  string convertBCD3ToDecimalString(uint16_t numSize);
   void printLogData(string regAlias) {
     Log(INFO) << "Register " << regAlias << " initialization...";
     Log(INFO) << "Register " << regAlias << " was succefully initialized.";
@@ -141,12 +146,15 @@ public:
     MSB = number[0];
     //    cout << MSB;
   }
+  void setMSB(bool sign) {
+    MSB = sign;
+    //    cout << MSB;
+  }
 
   void setSign(bool sign) {
     number[0] = sign;
     //    cout << MSB;
   }
-  string convertBinaryToDecimalString(bool isFloat = false);
 
   bool getMSB() const { return MSB; }
 
